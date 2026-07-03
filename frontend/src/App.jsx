@@ -14,6 +14,7 @@ const App = () => (
     <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/products" element={<HomePage />} />
         <Route path="/products/:id" element={<ProductPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/login" element={<LoginPage />} />

@@ -1,11 +1,11 @@
 # FreshMart
 
-FreshMart is a MERN grocery and vegetable shopping platform with JWT authentication, product browsing, cart, checkout, orders, wishlist, reviews, and admin product/order management.
+FreshMart is a MERN grocery and essentials shopping platform with JWT authentication, product browsing, cart, checkout, orders, wishlist, reviews, and admin product management.
 
 ## Project Structure
 
 ```text
-fresh_mart/
+fresh mart/
   backend/
     src/
       config/
@@ -28,7 +28,7 @@ fresh_mart/
 
 ## Prerequisites
 
-Install Node.js LTS, npm, and MongoDB Atlas or a local MongoDB server.
+Install Node.js LTS, npm, and either MongoDB Atlas or a local MongoDB server.
 
 ## Backend Setup
 
@@ -41,12 +41,23 @@ npm run dev
 
 Backend runs on `http://localhost:5000` by default.
 
+### Environment Variables
+
+Set these in `backend/.env`:
+
+- `MONGO_URI` - MongoDB Atlas connection string
+- `LOCAL_MONGO_URI` - Optional local fallback, defaults to `mongodb://127.0.0.1:27017/freshmart`
+- `JWT_SECRET` - Token signing secret
+- `CLIENT_URL` - Frontend origin for CORS
+- `NODE_ENV` - Use `production` for deployed environments
+
+If `MONGO_URI` is unavailable in development, the backend will try the local MongoDB fallback.
+
 ## Frontend Setup
 
 ```bash
 cd frontend
 npm install
-copy .env.example .env
 npm run dev
 ```
 
@@ -89,16 +100,16 @@ Frontend runs on `http://localhost:5173` by default.
 
 ## Deployment Guide
 
-1. Create MongoDB Atlas cluster and set `MONGO_URI`.
-2. In MongoDB Atlas, go to Network Access and whitelist your current IP: `110.226.25.170`.
-3. Deploy backend to Render, Railway, Fly.io, or an AWS container.
+1. Create a MongoDB Atlas cluster and set `MONGO_URI`.
+2. Add your backend host IP address in Atlas Network Access.
+3. Deploy the backend to Render, Railway, Fly.io, or an AWS container.
 4. Set backend env vars: `MONGO_URI`, `JWT_SECRET`, `CLIENT_URL`, `NODE_ENV=production`.
-5. Deploy frontend to Vercel or Netlify.
+5. Deploy the frontend to Vercel or Netlify.
 6. Set frontend env var: `VITE_API_URL=https://your-api-domain.com/api`.
 7. Configure CORS to allow only your production frontend domain.
-8. Use HTTPS, strong JWT secret, secure payment webhooks, and centralized logging.
+8. Use HTTPS, a strong JWT secret, secure payment webhooks, and centralized logging.
 
-## Scalability Improvements
+## Scalability Notes
 
 - Add Redis for sessions, cart caching, and rate limit storage.
 - Move images to Cloudinary or S3 with signed upload URLs.
@@ -106,4 +117,3 @@ Frontend runs on `http://localhost:5173` by default.
 - Use background jobs for email, invoices, and inventory sync.
 - Add pagination everywhere admin lists can grow.
 - Add API tests, frontend component tests, and CI checks before deployment.
-

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import api from '../api/client.js';
 import ProductCard from '../components/ProductCard.jsx';
 
-const categories = ['All', 'Fruits', 'Vegetables', 'Dairy', 'Bakery', 'Grains', 'Beverages', 'Snacks'];
+const categories = ['All', 'Fruits', 'Vegetables', 'Dairy', 'Bakery', 'Grains', 'Beverages', 'Snacks', 'Household'];
 const categoryCards = [
   {
     name: 'Fruits',
@@ -44,9 +44,16 @@ const HomePage = () => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('-createdAt');
+  const [page, setPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const featured = products.filter((product) => product.isFeatured).slice(0, 3);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, category, sort]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -56,19 +63,23 @@ const HomePage = () => {
       const params = {
         search: search || undefined,
         category: category === 'All' ? undefined : category,
-        sort
+        sort,
+        page,
+        limit: 100
       };
       const { data } = await api.get('/products', { params, signal: controller.signal });
-      setProducts(data.products);
+      setProducts((currentProducts) => (page === 1 ? data.products : [...currentProducts, ...data.products]));
+      setTotalProducts(data.total || data.products.length);
+      setTotalPages(data.pages || 1);
       setLoading(false);
     };
     loadProducts().catch((err) => {
       if (err.name === 'CanceledError') return;
-      setError('Could not load products. Check that the backend is running.');
+      setError('Could not load products. Start the backend and make sure MongoDB Atlas allows your current IP address.');
       setLoading(false);
     });
     return () => controller.abort();
-  }, [search, category, sort]);
+  }, [search, category, sort, page]);
 
   return (
     <div className="space-y-8">
@@ -189,7 +200,9 @@ const HomePage = () => {
       <div className="flex items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black">Shop groceries</h2>
-          <p className="mt-1 text-sm text-slate-500">{loading ? 'Finding the freshest matches...' : `${products.length} products shown`}</p>
+          <p className="mt-1 text-sm text-slate-500">
+            {loading && page === 1 ? 'Finding the freshest matches...' : `${products.length} of ${totalProducts} products shown`}
+          </p>
         </div>
         {(search || category !== 'All') && (
           <button onClick={() => { setSearch(''); setCategory('All'); }} className="text-sm font-bold text-leaf">
@@ -233,9 +246,22 @@ const HomePage = () => {
           ))}
         </section>
       ) : products.length ? (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {products.map((product) => <ProductCard key={product._id} product={product} />)}
-        </section>
+        <>
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {products.map((product) => <ProductCard key={product._id} product={product} />)}
+          </section>
+          {page < totalPages && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setPage((currentPage) => currentPage + 1)}
+                disabled={loading}
+                className="rounded-full bg-leaf px-6 py-3 font-bold text-white shadow-sm transition hover:bg-leaf-dark disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Loading...' : 'Load more products'}
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <section className="rounded-lg bg-white p-8 text-center shadow-sm">
           <h3 className="text-xl font-bold">No products found</h3>
