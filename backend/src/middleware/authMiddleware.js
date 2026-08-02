@@ -2,6 +2,12 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import asyncHandler from './asyncHandler.js';
 
+const forbiddenError = () => {
+  const error = new Error('Access denied.');
+  error.statusCode = 403;
+  return error;
+};
+
 export const protect = asyncHandler(async (req, _res, next) => {
   const header = req.headers.authorization;
 
@@ -40,20 +46,17 @@ export const protect = asyncHandler(async (req, _res, next) => {
 
 export const authorizeRoles = (...roles) => (req, _res, next) => {
   if (!roles.includes(req.user?.role)) {
-    const error = new Error(`${roles.join(' or ')} access required`);
-    error.statusCode = 403;
-    throw error;
+    throw forbiddenError();
   }
 
   if (req.user?.role === 'vendor' && req.user.vendorStatus !== 'approved') {
-    const error = new Error('Vendor registration pending approval');
-    error.statusCode = 403;
-    throw error;
+    throw forbiddenError();
   }
 
   next();
 };
 
+export const customer = authorizeRoles('user');
 export const admin = authorizeRoles('admin');
 
 export const vendor = authorizeRoles('vendor');

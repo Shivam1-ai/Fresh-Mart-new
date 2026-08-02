@@ -24,7 +24,6 @@ const router = express.Router();
 router.get('/summary', protect, admin, getDashboardSummary);
 router.get('/analytics', protect, admin, getAnalytics);
 router.get('/categories', protect, admin, getCategories);
-router.get('/transactions', protect, admin, getTransactions);
 router.get('/users', protect, admin, getUsers);
 router.patch('/users/:id/role', protect, admin, updateUserRole);
 router.patch('/users/:id/status', protect, admin, updateUserStatus);

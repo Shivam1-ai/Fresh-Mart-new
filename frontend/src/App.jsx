@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Header from './components/Header.jsx';
+import { AdminRoute, CustomerRoute, VendorRoute } from './components/ProtectedRoute.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 
 const AdminPage = lazy(() => import('./pages/AdminPage.jsx'));
@@ -25,15 +26,6 @@ const LoadingShell = () => (
   </div>
 );
 
-const GuardedRoute = ({ children, allow }) => {
-  const { user } = useAuth();
-
-  if (!user) return <Navigate to="/login" replace />;
-  if (allow && !allow.includes(user.role)) return <Navigate to={getDashboardPath(user.role)} replace />;
-
-  return children;
-};
-
 const PublicOnlyRoute = ({ children }) => {
   const { user } = useAuth();
   if (user) return <Navigate to={getDashboardPath(user.role)} replace />;
@@ -57,10 +49,11 @@ const App = () => (
           <Route path="/products" element={<HomePage />} />
           <Route path="/products/:id" element={<ProductPage />} />
           <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
-          <Route path="/cart" element={<GuardedRoute allow={['user']}><CartPage /></GuardedRoute>} />
-          <Route path="/profile" element={<GuardedRoute allow={['user']}><ProfilePage /></GuardedRoute>} />
-          <Route path="/vendor" element={<GuardedRoute allow={['vendor']}><VendorPage /></GuardedRoute>} />
-          <Route path="/admin" element={<GuardedRoute allow={['admin']}><AdminPage /></GuardedRoute>} />
+          <Route path="/cart" element={<CustomerRoute><CartPage /></CustomerRoute>} />
+          <Route path="/orders" element={<CustomerRoute><ProfilePage /></CustomerRoute>} />
+          <Route path="/profile" element={<CustomerRoute><ProfilePage /></CustomerRoute>} />
+          <Route path="/vendor" element={<VendorRoute><VendorPage /></VendorRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>

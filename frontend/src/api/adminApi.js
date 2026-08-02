@@ -35,11 +35,6 @@ export const fetchCategories = async () => {
   return data;
 };
 
-export const fetchTransactions = async () => {
-  const { data } = await api.get('/admin/transactions');
-  return data;
-};
-
 export const fetchPromotions = async () => {
   const { data } = await api.get('/admin/promotions');
   return data;

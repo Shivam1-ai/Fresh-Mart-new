@@ -77,7 +77,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
   const isOwner = order.user._id.toString() === req.user._id.toString();
   const isVendor = req.user.role === 'vendor' && order.items.some((item) => item.vendor?._id?.toString() === req.user._id.toString());
 
-  if (req.user.role !== 'admin' && !isOwner && !isVendor) {
+  if (!isOwner && !isVendor) {
     res.status(403);
     throw new Error('Not authorized to view this order');
   }
@@ -94,7 +94,7 @@ export const getOrderTracking = asyncHandler(async (req, res) => {
   }
 
   const isOwner = String(order.user) === String(req.user._id);
-  if (req.user.role !== 'admin' && !isOwner) {
+  if (!isOwner) {
     res.status(403);
     throw new Error('Not authorized to view tracking information');
   }

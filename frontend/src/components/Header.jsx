@@ -61,8 +61,8 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
     ) : user.role === 'vendor' ? (
       <>
         <NavLink to="/vendor" onClick={close} className={linkClass}>Dashboard</NavLink>
-        <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
         <NavLink to="/vendor" onClick={close} className={linkClass}>Orders</NavLink>
+        <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
         <NavLink to="/vendor" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
           {user.profileImage ? (
             <img src={user.profileImage} alt={user.name || 'Profile'} className="h-5 w-5 rounded-full object-cover" />
@@ -114,7 +114,7 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
             </span>
           )}
         </NavLink>
-        <NavLink to="/profile" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
+        <NavLink to="/orders" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
           {user.profileImage ? (
             <img src={user.profileImage} alt={user.name || 'Profile'} className="h-5 w-5 rounded-full object-cover" />
           ) : (
