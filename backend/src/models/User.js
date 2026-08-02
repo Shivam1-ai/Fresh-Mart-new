@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 8 },
     phone: String,
+    profileImage: String,
     role: { type: String, enum: ['user', 'admin', 'vendor'], default: 'user' },
     isActive: { type: Boolean, default: true },
     vendorStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: undefined },

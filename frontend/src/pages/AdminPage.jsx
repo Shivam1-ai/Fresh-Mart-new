@@ -111,6 +111,7 @@ const AdminPage = () => {
   };
 
   const handleRejectVendor = async (vendorId) => {
+    if (!window.confirm('Reject this vendor application?')) return;
     await rejectVendor(vendorId, { reason: 'Rejected by administrator' });
     await refresh();
   };
@@ -121,6 +122,7 @@ const AdminPage = () => {
   };
 
   const handleDeletePromotion = async (promotionId) => {
+    if (!window.confirm('Delete this coupon?')) return;
     await deletePromotion(promotionId);
     await refresh();
   };

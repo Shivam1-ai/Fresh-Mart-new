@@ -1,19 +1,19 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import api from '../api/client.js';
+import { broadcastAuthChange, clearStoredSession, persistStoredUser, readStoredUser, subscribeToAuthChanges } from '../utils/authSession.js';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('freshmart_user') || 'null'));
+  const [user, setUser] = useState(() => readStoredUser());
+
+  useEffect(() => subscribeToAuthChanges((nextUser) => setUser(nextUser)), []);
 
   const syncUser = (nextUser) => {
-    if (nextUser) {
-      localStorage.setItem('freshmart_user', JSON.stringify(nextUser));
-    } else {
-      localStorage.removeItem('freshmart_user');
-    }
-
+    if (nextUser) persistStoredUser(nextUser);
+    else clearStoredSession();
     setUser(nextUser);
+    broadcastAuthChange(nextUser);
   };
 
   const login = async (email, password) => {

@@ -31,6 +31,7 @@ const emptyVendorForm = {
   email: '',
   password: '',
   phone: '',
+  profileImage: '',
   storeName: '',
   businessName: '',
   gstNumber: '',
@@ -44,8 +45,8 @@ const categoryOptions = ['Fruits', 'Vegetables', 'Dairy', 'Bakery', 'Grains', 'B
 const VendorPage = () => {
   const { user, updateUser } = useAuth();
   const approvedVendor = user?.role === 'vendor' && user?.vendorStatus === 'approved';
-  const [vendorForm, setVendorForm] = useState({ ...emptyVendorForm, name: user?.name || '', email: user?.email || '', phone: user?.phone || '' });
-  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', vendorProfile: {} });
+  const [vendorForm, setVendorForm] = useState({ ...emptyVendorForm, name: user?.name || '', email: user?.email || '', phone: user?.phone || '', profileImage: user?.profileImage || '' });
+  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', profileImage: '', vendorProfile: {} });
   const [dashboard, setDashboard] = useState(null);
   const [productForm, setProductForm] = useState(emptyProduct);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -66,6 +67,7 @@ const VendorPage = () => {
           name: profile.name || '',
           email: profile.email || '',
           phone: profile.phone || '',
+          profileImage: profile.profileImage || '',
           vendorProfile: {
             ...(profile.vendorProfile || {})
           }
@@ -87,6 +89,7 @@ const VendorPage = () => {
       name: profile.name || '',
       email: profile.email || '',
       phone: profile.phone || '',
+      profileImage: profile.profileImage || '',
       vendorProfile: {
         ...(profile.vendorProfile || {})
       }
@@ -115,7 +118,7 @@ const VendorPage = () => {
     try {
       const data = await updateVendorProfile(profileForm);
       updateUser(data);
-      setMessage('Vendor profile updated.');
+      setMessage('Profile updated successfully.');
       await refresh();
     } catch (err) {
       setMessage(err.response?.data?.message || 'Could not update vendor profile.');
@@ -147,11 +150,13 @@ const VendorPage = () => {
   };
 
   const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Archive this product?')) return;
     await deleteVendorProduct(productId);
     await refresh();
   };
 
   const handleOrderAction = async (orderId, status, note) => {
+    if ((status === 'Rejected' || status === 'Delivered') && !window.confirm(`Mark order as ${status.toLowerCase()}?`)) return;
     await updateVendorOrderStatus(orderId, { status, note });
     await refresh();
     setSelectedOrder(null);
@@ -191,6 +196,13 @@ const VendorPage = () => {
               value={vendorForm.description}
               onChange={(event) => setVendorForm({ ...vendorForm, description: event.target.value })}
               placeholder="Business description"
+              className="sm:col-span-2 rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf"
+            />
+            <input
+              type="url"
+              value={vendorForm.profileImage}
+              onChange={(event) => setVendorForm({ ...vendorForm, profileImage: event.target.value })}
+              placeholder="Profile image URL"
               className="sm:col-span-2 rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf"
             />
             <button className="sm:col-span-2 rounded-md bg-leaf px-4 py-3 font-bold text-white">Submit vendor application</button>
@@ -239,6 +251,7 @@ const VendorPage = () => {
             <input value={profileForm.name} onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })} placeholder="Name" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input value={profileForm.email} type="email" onChange={(event) => setProfileForm({ ...profileForm, email: event.target.value })} placeholder="Email" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input inputMode="numeric" maxLength={10} value={profileForm.phone} onChange={(event) => setProfileForm({ ...profileForm, phone: event.target.value.replace(/\D/g, '') })} placeholder="Phone" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
+            <input value={profileForm.profileImage} type="url" onChange={(event) => setProfileForm({ ...profileForm, profileImage: event.target.value })} placeholder="Profile image URL" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input value={profileForm.vendorProfile.storeName || ''} onChange={(event) => setProfileForm({ ...profileForm, vendorProfile: { ...(profileForm.vendorProfile || {}), storeName: event.target.value } })} placeholder="Store name" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input value={profileForm.vendorProfile.businessName || ''} onChange={(event) => setProfileForm({ ...profileForm, vendorProfile: { ...(profileForm.vendorProfile || {}), businessName: event.target.value } })} placeholder="Business name" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input value={profileForm.vendorProfile.gstNumber || ''} onChange={(event) => setProfileForm({ ...profileForm, vendorProfile: { ...(profileForm.vendorProfile || {}), gstNumber: event.target.value } })} placeholder="GST number" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />

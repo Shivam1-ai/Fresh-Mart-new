@@ -1,5 +1,5 @@
 import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -7,14 +7,10 @@ import { useCart } from '../context/CartContext.jsx';
 
 const CartPage = () => {
   const { user } = useAuth();
-  const { cart, loadCart, updateQuantity, removeFromCart, clearCart, subtotal } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, subtotal } = useCart();
   const [shippingAddress, setShippingAddress] = useState({ street: '', city: '', state: '', pincode: '', phone: '' });
   const [placing, setPlacing] = useState(false);
   const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    if (user) loadCart().catch(() => setMessage('Could not load your cart.'));
-  }, [user]);
 
   const shipping = subtotal >= 499 || subtotal === 0 ? 0 : 49;
   const tax = Number((subtotal * 0.05).toFixed(2));

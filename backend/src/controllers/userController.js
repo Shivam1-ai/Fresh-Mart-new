@@ -5,11 +5,26 @@ import generateToken from '../utils/generateToken.js';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^\d{10}$/;
 
+const sanitizeProfileImage = (value) => {
+  if (!value) return undefined;
+
+  const image = String(value).trim();
+  if (!image) return undefined;
+
+  try {
+    const parsed = new URL(image);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const userPayload = (user) => ({
   _id: user._id,
   name: user.name,
   email: user.email,
   phone: user.phone,
+  profileImage: user.profileImage,
   role: user.role,
   isActive: user.isActive,
   vendorStatus: user.vendorStatus,
@@ -26,6 +41,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   const nextEmail = req.body.email?.trim().toLowerCase();
   const nextPhone = req.body.phone ? String(req.body.phone).replace(/\D/g, '') : user.phone;
+  const nextProfileImage = sanitizeProfileImage(req.body.profileImage);
 
   if (nextEmail && !emailPattern.test(nextEmail)) {
     res.status(400);
@@ -48,6 +64,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   user.name = req.body.name ?? user.name;
   user.phone = nextPhone;
+  if (req.body.profileImage !== undefined) user.profileImage = nextProfileImage;
   if (req.body.password) user.password = req.body.password;
   await user.save();
   res.json(userPayload(user));

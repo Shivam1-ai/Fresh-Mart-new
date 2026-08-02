@@ -67,7 +67,7 @@ const LoginPage = () => {
           Save your cart, place COD orders, and track FreshMart deliveries from your profile.
         </p>
         <div className="mt-8 rounded-lg bg-white/10 p-4 text-sm">
-          Admin demo: admin@freshmart.com / Admin@12345
+          Use customer or vendor registration for public sign-up. Admin accounts are created separately.
         </div>
       </section>
       <section className="p-6 sm:p-8">

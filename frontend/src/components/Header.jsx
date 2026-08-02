@@ -61,10 +61,14 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
     ) : user.role === 'vendor' ? (
       <>
         <NavLink to="/vendor" onClick={close} className={linkClass}>Dashboard</NavLink>
-        <NavLink to="/vendor" onClick={close} className={linkClass}>Orders</NavLink>
         <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
+        <NavLink to="/vendor" onClick={close} className={linkClass}>Orders</NavLink>
         <NavLink to="/vendor" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
-          <User className="h-5 w-5" aria-hidden="true" />
+          {user.profileImage ? (
+            <img src={user.profileImage} alt={user.name || 'Profile'} className="h-5 w-5 rounded-full object-cover" />
+          ) : (
+            <User className="h-5 w-5" aria-hidden="true" />
+          )}
           <span>Profile</span>
         </NavLink>
         <button
@@ -82,8 +86,10 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
       <>
         <NavLink to="/admin" onClick={close} className={linkClass}>Dashboard</NavLink>
         <NavLink to="/admin" onClick={close} className={linkClass}>Users</NavLink>
+        <NavLink to="/admin" onClick={close} className={linkClass}>Vendors</NavLink>
         <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
         <NavLink to="/admin" onClick={close} className={linkClass}>Categories</NavLink>
+        <NavLink to="/admin" onClick={close} className={linkClass}>Reports</NavLink>
         <button
           onClick={() => {
             clearCart();
@@ -109,11 +115,19 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
           )}
         </NavLink>
         <NavLink to="/profile" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
-          <User className="h-5 w-5" aria-hidden="true" />
+          {user.profileImage ? (
+            <img src={user.profileImage} alt={user.name || 'Profile'} className="h-5 w-5 rounded-full object-cover" />
+          ) : (
+            <User className="h-5 w-5" aria-hidden="true" />
+          )}
           <span>Orders</span>
         </NavLink>
         <NavLink to="/profile" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
-          <User className="h-5 w-5" aria-hidden="true" />
+          {user.profileImage ? (
+            <img src={user.profileImage} alt={user.name || 'Profile'} className="h-5 w-5 rounded-full object-cover" />
+          ) : (
+            <User className="h-5 w-5" aria-hidden="true" />
+          )}
           <span>Profile</span>
         </NavLink>
         <button

@@ -8,11 +8,26 @@ import generateToken from '../utils/generateToken.js';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^\d{10}$/;
 
+const sanitizeProfileImage = (value) => {
+  if (!value) return undefined;
+
+  const image = String(value).trim();
+  if (!image) return undefined;
+
+  try {
+    const parsed = new URL(image);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const vendorPayload = (vendor) => ({
   _id: vendor._id,
   name: vendor.name,
   email: vendor.email,
   phone: vendor.phone,
+  profileImage: vendor.profileImage,
   role: vendor.role,
   vendorStatus: vendor.vendorStatus,
   vendorProfile: vendor.vendorProfile,
@@ -38,6 +53,7 @@ export const updateVendorProfile = asyncHandler(async (req, res) => {
 
   const nextEmail = req.body.email?.trim().toLowerCase();
   const nextPhone = req.body.phone ? String(req.body.phone).replace(/\D/g, '') : vendor.phone;
+  const nextProfileImage = sanitizeProfileImage(req.body.profileImage);
 
   if (nextEmail && !emailPattern.test(nextEmail)) {
     res.status(400);
@@ -60,6 +76,7 @@ export const updateVendorProfile = asyncHandler(async (req, res) => {
 
   vendor.name = req.body.name ?? vendor.name;
   vendor.phone = nextPhone;
+  if (req.body.profileImage !== undefined) vendor.profileImage = nextProfileImage;
   vendor.vendorProfile = {
     ...(vendor.vendorProfile || {}),
     ...req.body.vendorProfile
@@ -177,7 +194,13 @@ export const updateVendorOrderStatus = asyncHandler(async (req, res) => {
     throw new Error('Not authorized to update this order');
   }
 
+  const allowedStatuses = ['Accepted', 'Rejected', 'Packed', 'Shipped', 'Delivered'];
   const nextStatus = req.body.status || order.status;
+
+  if (!allowedStatuses.includes(nextStatus)) {
+    res.status(400);
+    throw new Error('Invalid order status');
+  }
   const needsRestock = ['Rejected', 'Cancelled'].includes(nextStatus) && !['Rejected', 'Cancelled'].includes(order.status);
 
   if (needsRestock) {

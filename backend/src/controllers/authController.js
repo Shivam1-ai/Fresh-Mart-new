@@ -7,8 +7,22 @@ const phonePattern = /^\d{10}$/;
 
 const normalizeRole = (role) => {
   if (!role || role === 'user' || role === 'customer') return 'user';
-  if (role === 'admin' || role === 'vendor') return role;
+  if (role === 'vendor') return role;
   return null;
+};
+
+const sanitizeProfileImage = (value) => {
+  if (!value) return undefined;
+
+  const image = String(value).trim();
+  if (!image) return undefined;
+
+  try {
+    const parsed = new URL(image);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.toString() : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 const buildVendorProfile = (payload = {}) => ({
@@ -25,6 +39,7 @@ const userPayload = (user) => ({
   name: user.name,
   email: user.email,
   phone: user.phone,
+  profileImage: user.profileImage,
   role: user.role,
   isActive: user.isActive,
   vendorStatus: user.vendorStatus,
@@ -39,6 +54,7 @@ export const register = asyncHandler(async (req, res) => {
   const password = req.body.password;
   const phone = String(req.body.phone || '').replace(/\D/g, '');
   const role = normalizeRole(req.body.role);
+  const profileImage = sanitizeProfileImage(req.body.profileImage);
 
   if (!name || !email || !password) {
     res.status(400);
@@ -72,6 +88,7 @@ export const register = asyncHandler(async (req, res) => {
     email,
     password,
     phone,
+    profileImage,
     role,
     vendorStatus: role === 'vendor' ? 'pending' : undefined,
     vendorProfile: role === 'vendor' ? buildVendorProfile(req.body) : undefined

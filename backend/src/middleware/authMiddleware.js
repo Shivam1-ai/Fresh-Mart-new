@@ -12,7 +12,15 @@ export const protect = asyncHandler(async (req, _res, next) => {
   }
 
   const token = header.split(' ')[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    error.statusCode = 401;
+    error.message = error.name === 'TokenExpiredError' ? 'Session expired. Please log in again.' : 'Invalid authentication token';
+    throw error;
+  }
   req.user = await User.findById(decoded.userId).select('-password');
 
   if (!req.user) {
