@@ -3,6 +3,21 @@ import Product from '../models/Product.js';
 import ProductInquiry from '../models/ProductInquiry.js';
 import User from '../models/User.js';
 import asyncHandler from '../middleware/asyncHandler.js';
+import generateToken from '../utils/generateToken.js';
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phonePattern = /^\d{10}$/;
+
+const vendorPayload = (vendor) => ({
+  _id: vendor._id,
+  name: vendor.name,
+  email: vendor.email,
+  phone: vendor.phone,
+  role: vendor.role,
+  vendorStatus: vendor.vendorStatus,
+  vendorProfile: vendor.vendorProfile,
+  token: generateToken(vendor._id)
+});
 
 const slugify = (value) =>
   value
@@ -21,23 +36,37 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
 export const updateVendorProfile = asyncHandler(async (req, res) => {
   const vendor = await User.findById(req.user._id);
 
+  const nextEmail = req.body.email?.trim().toLowerCase();
+  const nextPhone = req.body.phone ? String(req.body.phone).replace(/\D/g, '') : vendor.phone;
+
+  if (nextEmail && !emailPattern.test(nextEmail)) {
+    res.status(400);
+    throw new Error('Enter a valid email address');
+  }
+
+  if (nextPhone && !phonePattern.test(nextPhone)) {
+    res.status(400);
+    throw new Error('Phone number must contain exactly 10 digits');
+  }
+
+  if (nextEmail && nextEmail !== vendor.email) {
+    const duplicate = await User.findOne({ email: nextEmail, _id: { $ne: vendor._id } });
+    if (duplicate) {
+      res.status(409);
+      throw new Error('Email is already registered');
+    }
+    vendor.email = nextEmail;
+  }
+
   vendor.name = req.body.name ?? vendor.name;
-  vendor.phone = req.body.phone ?? vendor.phone;
+  vendor.phone = nextPhone;
   vendor.vendorProfile = {
     ...(vendor.vendorProfile || {}),
     ...req.body.vendorProfile
   };
 
   await vendor.save();
-  res.json({
-    _id: vendor._id,
-    name: vendor.name,
-    email: vendor.email,
-    phone: vendor.phone,
-    role: vendor.role,
-    vendorStatus: vendor.vendorStatus,
-    vendorProfile: vendor.vendorProfile
-  });
+  res.json(vendorPayload(vendor));
 });
 
 export const getVendorDashboard = asyncHandler(async (req, res) => {
@@ -127,7 +156,11 @@ export const deleteVendorProduct = asyncHandler(async (req, res) => {
 });
 
 export const getVendorOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ 'items.vendor': req.user._id }).sort('-createdAt').populate('user', 'name email');
+  const orders = await Order.find({ 'items.vendor': req.user._id })
+    .sort('-createdAt')
+    .populate('user', 'name email phone')
+    .populate('items.product', 'name images price unit')
+    .populate('items.vendor', 'name email role');
   res.json(orders);
 });
 
@@ -144,12 +177,29 @@ export const updateVendorOrderStatus = asyncHandler(async (req, res) => {
     throw new Error('Not authorized to update this order');
   }
 
-  order.status = req.body.status || order.status;
-  if (order.status === 'Delivered') order.deliveredAt = new Date();
+  const nextStatus = req.body.status || order.status;
+  const needsRestock = ['Rejected', 'Cancelled'].includes(nextStatus) && !['Rejected', 'Cancelled'].includes(order.status);
+
+  if (needsRestock) {
+    await Promise.all(
+      order.items.map((item) => Product.findByIdAndUpdate(item.product, { $inc: { countInStock: item.quantity } }))
+    );
+  }
+
+  order.status = nextStatus;
+  if (['Delivered'].includes(order.status)) order.deliveredAt = new Date();
   order.trackingEvents = order.trackingEvents || [];
   order.trackingEvents.push({
     status: order.status,
-    note: req.body.note || `Vendor updated status to ${order.status}`,
+    note:
+      req.body.note ||
+      {
+        Accepted: 'Order accepted by vendor',
+        Rejected: 'Order rejected by vendor',
+        Packed: 'Order packed and ready for shipment',
+        Shipped: 'Order shipped from vendor',
+        Delivered: 'Order delivered to customer'
+      }[order.status] || `Vendor updated status to ${order.status}`,
     location: req.body.location,
     createdAt: new Date()
   });

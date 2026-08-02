@@ -5,17 +5,21 @@ import { fetchMyOrders, fetchOrderTracking } from '../api/orderApi.js';
 import { createRefundRequest } from '../api/refundApi.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
+const phonePattern = /^\d{10}$/;
+
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [profile, setProfile] = useState(user);
   const [orders, setOrders] = useState([]);
   const [message, setMessage] = useState('');
   const [tracking, setTracking] = useState(null);
   const [trackingMessage, setTrackingMessage] = useState('');
   const [refundForm, setRefundForm] = useState({ orderId: '', type: 'Refund', reason: '', amount: '' });
+  const phoneError = profile?.phone && !phonePattern.test(profile.phone) ? 'Phone number must contain exactly 10 digits.' : '';
 
   useEffect(() => {
     if (!user) return;
+    setProfile(user);
     api.get('/users/profile').then(({ data }) => setProfile(data)).catch(() => {});
     fetchMyOrders().then(setOrders).catch(() => {});
   }, [user]);
@@ -23,9 +27,16 @@ const ProfilePage = () => {
   const updateProfile = async (event) => {
     event.preventDefault();
     setMessage('');
+
+    if (!phonePattern.test(profile?.phone || '')) {
+      setMessage('Phone number must contain exactly 10 digits.');
+      return;
+    }
+
     try {
-      const { data } = await api.put('/users/profile', { name: profile.name, phone: profile.phone });
+      const { data } = await api.put('/users/profile', { name: profile.name, email: profile.email, phone: profile.phone });
       setProfile(data);
+      updateUser(data);
       setMessage('Profile updated.');
     } catch (error) {
       setMessage(error.response?.data?.message || 'Could not update profile.');
@@ -75,7 +86,15 @@ const ProfilePage = () => {
         </div>
         <form onSubmit={updateProfile} className="mt-5 space-y-3">
           <input className="w-full rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" value={profile?.name || ''} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
-          <input className="w-full rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" value={profile?.phone || ''} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+          <input type="email" className="w-full rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" value={profile?.email || ''} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+          <input
+            inputMode="numeric"
+            maxLength={10}
+            className="w-full rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf"
+            value={profile?.phone || ''}
+            onChange={(e) => setProfile({ ...profile, phone: e.target.value.replace(/\D/g, '') })}
+          />
+          {phoneError && <p className="text-sm font-semibold text-red-600">{phoneError}</p>}
           <button className="flex w-full items-center justify-center gap-2 rounded-md bg-leaf px-4 py-3 font-bold text-white">
             <Save className="h-4 w-4" /> Save profile
           </button>

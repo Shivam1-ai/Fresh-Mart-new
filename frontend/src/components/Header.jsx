@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext.jsx';
 
 const Header = () => {
   const { user, logout } = useAuth();
-  const { itemCount } = useCart();
+  const { itemCount, clearCart } = useCart();
   const [open, setOpen] = useState(false);
 
   const linkClass = ({ isActive }) =>
@@ -47,26 +47,46 @@ const Header = () => {
 
 const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
   <>
-    <NavLink to="/" onClick={close} className={linkClass}>Shop</NavLink>
-    <NavLink to="/vendor" onClick={close} className={linkClass}>Vendor</NavLink>
-    <NavLink to="/cart" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} relative flex items-center gap-2`}>
-      <ShoppingCart className="h-5 w-5" aria-hidden="true" />
-      <span>Cart</span>
-      {itemCount > 0 && (
-        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-tomato px-1 text-xs text-white">
-          {itemCount}
-        </span>
-      )}
-    </NavLink>
-    {user ? (
+    {!user ? (
       <>
-        <NavLink to="/profile" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
+        <NavLink to="/" onClick={close} className={linkClass}>Home</NavLink>
+        <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
+        <NavLink to="/login" onClick={close} className="rounded-full px-3 py-2 transition text-slate-700 hover:bg-limewash hover:text-leaf">
+          Login
+        </NavLink>
+        <NavLink to="/login" state={{ mode: 'register' }} onClick={close} className="rounded-full bg-leaf px-4 py-2 text-center text-white shadow-sm transition hover:bg-emerald-700">
+          Register
+        </NavLink>
+      </>
+    ) : user.role === 'vendor' ? (
+      <>
+        <NavLink to="/vendor" onClick={close} className={linkClass}>Dashboard</NavLink>
+        <NavLink to="/vendor" onClick={close} className={linkClass}>Orders</NavLink>
+        <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
+        <NavLink to="/vendor" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
           <User className="h-5 w-5" aria-hidden="true" />
           <span>Profile</span>
         </NavLink>
-        {user.role === 'admin' && <NavLink to="/admin" onClick={close} className={linkClass}>Admin</NavLink>}
         <button
           onClick={() => {
+            clearCart();
+            logout();
+            close();
+          }}
+          className="flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-2 text-slate-700 transition hover:bg-limewash hover:text-leaf"
+        >
+          <LogOut className="h-4 w-4" /> Logout
+        </button>
+      </>
+    ) : user.role === 'admin' ? (
+      <>
+        <NavLink to="/admin" onClick={close} className={linkClass}>Dashboard</NavLink>
+        <NavLink to="/admin" onClick={close} className={linkClass}>Users</NavLink>
+        <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
+        <NavLink to="/admin" onClick={close} className={linkClass}>Categories</NavLink>
+        <button
+          onClick={() => {
+            clearCart();
             logout();
             close();
           }}
@@ -76,9 +96,37 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
         </button>
       </>
     ) : (
-      <NavLink to="/login" onClick={close} className="rounded-full bg-leaf px-4 py-2 text-center text-white shadow-sm transition hover:bg-emerald-700">
-        Login
-      </NavLink>
+      <>
+        <NavLink to="/" onClick={close} className={linkClass}>Home</NavLink>
+        <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
+        <NavLink to="/cart" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} relative flex items-center gap-2`}>
+          <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+          <span>Cart</span>
+          {itemCount > 0 && (
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-tomato px-1 text-xs text-white">
+              {itemCount}
+            </span>
+          )}
+        </NavLink>
+        <NavLink to="/profile" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
+          <User className="h-5 w-5" aria-hidden="true" />
+          <span>Orders</span>
+        </NavLink>
+        <NavLink to="/profile" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
+          <User className="h-5 w-5" aria-hidden="true" />
+          <span>Profile</span>
+        </NavLink>
+        <button
+          onClick={() => {
+            clearCart();
+            logout();
+            close();
+          }}
+          className="flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-2 text-slate-700 transition hover:bg-limewash hover:text-leaf"
+        >
+          <LogOut className="h-4 w-4" /> Logout
+        </button>
+      </>
     )}
   </>
 );

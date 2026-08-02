@@ -4,6 +4,7 @@ import {
   createVendorProduct,
   deleteVendorProduct,
   fetchVendorDashboard,
+  fetchVendorOrders,
   fetchVendorProfile,
   registerVendor,
   replyToInquiry,
@@ -41,14 +42,15 @@ const emptyVendorForm = {
 const categoryOptions = ['Fruits', 'Vegetables', 'Dairy', 'Bakery', 'Grains', 'Beverages', 'Snacks', 'Household'];
 
 const VendorPage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const approvedVendor = user?.role === 'vendor' && user?.vendorStatus === 'approved';
   const [vendorForm, setVendorForm] = useState({ ...emptyVendorForm, name: user?.name || '', email: user?.email || '', phone: user?.phone || '' });
-  const [profileForm, setProfileForm] = useState({ name: '', phone: '', vendorProfile: {} });
+  const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', vendorProfile: {} });
   const [dashboard, setDashboard] = useState(null);
   const [productForm, setProductForm] = useState(emptyProduct);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [orderDrafts, setOrderDrafts] = useState({});
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [replyDrafts, setReplyDrafts] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -59,16 +61,17 @@ const VendorPage = () => {
     const loadVendorData = async () => {
       try {
         setError('');
-        const [profile, summary] = await Promise.all([fetchVendorProfile(), fetchVendorDashboard()]);
+        const [profile, summary, vendorOrders] = await Promise.all([fetchVendorProfile(), fetchVendorDashboard(), fetchVendorOrders()]);
         setProfileForm({
           name: profile.name || '',
+          email: profile.email || '',
           phone: profile.phone || '',
           vendorProfile: {
             ...(profile.vendorProfile || {})
           }
         });
         setDashboard(summary);
-        setOrderDrafts((summary.recentOrders || []).reduce((accumulator, order) => ({ ...accumulator, [order._id]: { status: order.status, note: '' } }), {}));
+        setOrders(vendorOrders);
         setReplyDrafts((summary.inquiries || []).reduce((accumulator, inquiry) => ({ ...accumulator, [inquiry._id]: '' }), {}));
       } catch (err) {
         setError(err.response?.data?.message || 'Could not load vendor dashboard.');
@@ -79,16 +82,17 @@ const VendorPage = () => {
   }, [approvedVendor]);
 
   const refresh = async () => {
-    const [profile, summary] = await Promise.all([fetchVendorProfile(), fetchVendorDashboard()]);
+    const [profile, summary, vendorOrders] = await Promise.all([fetchVendorProfile(), fetchVendorDashboard(), fetchVendorOrders()]);
     setProfileForm({
       name: profile.name || '',
+      email: profile.email || '',
       phone: profile.phone || '',
       vendorProfile: {
         ...(profile.vendorProfile || {})
       }
     });
     setDashboard(summary);
-    setOrderDrafts((summary.recentOrders || []).reduce((accumulator, order) => ({ ...accumulator, [order._id]: { status: order.status, note: '' } }), {}));
+    setOrders(vendorOrders);
     setReplyDrafts((summary.inquiries || []).reduce((accumulator, inquiry) => ({ ...accumulator, [inquiry._id]: '' }), {}));
   };
 
@@ -96,7 +100,8 @@ const VendorPage = () => {
     event.preventDefault();
     setMessage('');
     try {
-      await registerVendor(vendorForm);
+      const data = await registerVendor(vendorForm);
+      updateUser(data);
       setVendorForm(emptyVendorForm);
       setMessage('Vendor registration submitted for approval.');
     } catch (err) {
@@ -108,7 +113,8 @@ const VendorPage = () => {
     event.preventDefault();
     setMessage('');
     try {
-      await updateVendorProfile(profileForm);
+      const data = await updateVendorProfile(profileForm);
+      updateUser(data);
       setMessage('Vendor profile updated.');
       await refresh();
     } catch (err) {
@@ -145,9 +151,10 @@ const VendorPage = () => {
     await refresh();
   };
 
-  const handleOrderStatus = async (orderId) => {
-    await updateVendorOrderStatus(orderId, orderDrafts[orderId]);
+  const handleOrderAction = async (orderId, status, note) => {
+    await updateVendorOrderStatus(orderId, { status, note });
     await refresh();
+    setSelectedOrder(null);
   };
 
   const handleReplyInquiry = async (inquiryId) => {
@@ -206,7 +213,6 @@ const VendorPage = () => {
 
   const counts = dashboard?.counts || {};
   const products = dashboard?.products || [];
-  const orders = dashboard?.recentOrders || [];
   const inquiries = dashboard?.inquiries || [];
   const lowStockProducts = dashboard?.lowStockProducts || [];
 
@@ -231,7 +237,8 @@ const VendorPage = () => {
         <Panel title="Vendor profile" icon={<Store />}>
           <form onSubmit={handleProfileSave} className="grid gap-3 sm:grid-cols-2">
             <input value={profileForm.name} onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })} placeholder="Name" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
-            <input value={profileForm.phone} onChange={(event) => setProfileForm({ ...profileForm, phone: event.target.value })} placeholder="Phone" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
+            <input value={profileForm.email} type="email" onChange={(event) => setProfileForm({ ...profileForm, email: event.target.value })} placeholder="Email" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
+            <input inputMode="numeric" maxLength={10} value={profileForm.phone} onChange={(event) => setProfileForm({ ...profileForm, phone: event.target.value.replace(/\D/g, '') })} placeholder="Phone" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input value={profileForm.vendorProfile.storeName || ''} onChange={(event) => setProfileForm({ ...profileForm, vendorProfile: { ...(profileForm.vendorProfile || {}), storeName: event.target.value } })} placeholder="Store name" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input value={profileForm.vendorProfile.businessName || ''} onChange={(event) => setProfileForm({ ...profileForm, vendorProfile: { ...(profileForm.vendorProfile || {}), businessName: event.target.value } })} placeholder="Business name" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
             <input value={profileForm.vendorProfile.gstNumber || ''} onChange={(event) => setProfileForm({ ...profileForm, vendorProfile: { ...(profileForm.vendorProfile || {}), gstNumber: event.target.value } })} placeholder="GST number" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
@@ -275,29 +282,25 @@ const VendorPage = () => {
           </form>
         </Panel>
 
-        <Panel title="Recent orders" icon={<ClipboardList />}>
+        <Panel title="Order management" icon={<ClipboardList />}>
           <div className="space-y-3">
-            {orders.map((order) => {
-              const draft = orderDrafts[order._id] || { status: order.status, note: '' };
-              return (
-                <div key={order._id} className="rounded-lg border border-slate-100 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="font-semibold">#{order._id.slice(-6).toUpperCase()}</p>
-                      <p className="text-sm text-slate-500">{order.user?.name || 'Customer'}</p>
-                    </div>
+            {orders.map((order) => (
+              <div key={order._id} className="rounded-lg border border-slate-100 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">Order #{order._id.slice(-6).toUpperCase()}</p>
+                    <p className="text-sm text-slate-500">{order.user?.name || 'Customer'} · {new Date(order.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-limewash px-3 py-1 text-sm font-bold text-leaf">{order.status}</span>
                     <strong>Rs. {order.totalPrice}</strong>
                   </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <select value={draft.status} onChange={(event) => setOrderDrafts({ ...orderDrafts, [order._id]: { ...draft, status: event.target.value } })} className="rounded-md border border-slate-200 px-3 py-2 outline-none focus:border-leaf">
-                      {['Pending', 'Paid', 'Packed', 'Out for delivery', 'Delivered', 'Cancelled'].map((status) => <option key={status} value={status}>{status}</option>)}
-                    </select>
-                    <input value={draft.note} onChange={(event) => setOrderDrafts({ ...orderDrafts, [order._id]: { ...draft, note: event.target.value } })} placeholder="Tracking note" className="rounded-md border border-slate-200 px-3 py-2 outline-none focus:border-leaf" />
-                  </div>
-                  <button onClick={() => handleOrderStatus(order._id)} className="mt-3 rounded-full bg-leaf px-3 py-2 text-sm font-bold text-white">Update status</button>
                 </div>
-              );
-            })}
+                <button onClick={() => setSelectedOrder(order)} className="mt-3 rounded-full bg-leaf px-3 py-2 text-sm font-bold text-white">
+                  View preview
+                </button>
+              </div>
+            ))}
             {!orders.length && <p className="text-slate-500">No vendor orders yet.</p>}
           </div>
         </Panel>
@@ -335,6 +338,14 @@ const VendorPage = () => {
           </div>
         </Panel>
       </section>
+
+      {selectedOrder && (
+        <OrderPreviewModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onAction={handleOrderAction}
+        />
+      )}
     </div>
   );
 };
@@ -364,6 +375,115 @@ const Feature = ({ icon, title, text }) => (
       <span className="block font-bold text-white">{title}</span>
       <span className="text-white/70">{text}</span>
     </span>
+  </div>
+);
+
+const OrderPreviewModal = ({ order, onClose, onAction }) => {
+  const shippingAddress = order.shippingAddress || {};
+  const actions = [
+    { label: 'Accept Order', status: 'Accepted', tone: 'bg-leaf' },
+    { label: 'Reject Order', status: 'Rejected', tone: 'bg-slate-900' },
+    { label: 'Mark as Packed', status: 'Packed', tone: 'bg-amber-600' },
+    { label: 'Mark as Shipped', status: 'Shipped', tone: 'bg-sky-600' },
+    { label: 'Mark as Delivered', status: 'Delivered', tone: 'bg-emerald-700' }
+  ];
+
+  return (
+    <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/60 p-4">
+      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold uppercase text-slate-500">Order preview</p>
+            <h3 className="text-2xl font-black">Order #{order._id.slice(-6).toUpperCase()}</h3>
+            <p className="text-sm text-slate-500">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+          </div>
+          <button onClick={onClose} className="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-50" aria-label="Close order preview">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <section className="mt-5 grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-100 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="font-black">Ordered products</h4>
+                <span className="rounded-full bg-limewash px-3 py-1 text-sm font-bold text-leaf">{order.items?.length || 0} items</span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {order.items?.map((item) => {
+                  const image = item.product?.images?.[0]?.url || item.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80';
+                  const lineTotal = Number(item.price || 0) * Number(item.quantity || 0);
+                  return (
+                    <div key={`${order._id}-${item.product?._id || item.name}`} className="flex gap-3 rounded-lg bg-slate-50 p-3">
+                      <img src={image} alt={item.product?.name || item.name} className="h-16 w-16 rounded-md object-cover" />
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold">{item.product?.name || item.name}</p>
+                            <p className="text-sm text-slate-500">Qty: {item.quantity} · Rs. {item.price} each</p>
+                          </div>
+                          <strong>Rs. {lineTotal}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InfoCard title="Customer" lines={[order.user?.name, order.user?.email, order.user?.phone].filter(Boolean)} />
+              <InfoCard
+                title="Shipping address"
+                lines={[
+                  shippingAddress.fullName,
+                  shippingAddress.phone,
+                  shippingAddress.line1,
+                  shippingAddress.line2,
+                  [shippingAddress.city, shippingAddress.state, shippingAddress.postalCode].filter(Boolean).join(', '),
+                  shippingAddress.country
+                ].filter(Boolean)}
+              />
+            </div>
+          </div>
+
+          <aside className="space-y-4">
+            <InfoCard title="Order details" lines={[
+              `Status: ${order.status}`,
+              `Payment: ${order.paymentMethod || 'COD'}`,
+              `Total: Rs. ${order.totalPrice}`,
+              `Date: ${new Date(order.createdAt).toLocaleDateString()}`
+            ]} />
+
+            <div className="rounded-xl border border-slate-100 p-4">
+              <h4 className="font-black">Actions</h4>
+              <div className="mt-3 grid gap-2">
+                {actions.map((action) => (
+                  <button
+                    key={action.status}
+                    onClick={() => onAction(order._id, action.status)}
+                    className={`rounded-full px-4 py-2 text-sm font-bold text-white ${action.tone}`}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+const InfoCard = ({ title, lines }) => (
+  <div className="rounded-xl border border-slate-100 p-4">
+    <h4 className="font-black">{title}</h4>
+    <div className="mt-2 space-y-1 text-sm text-slate-600">
+      {lines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </div>
   </div>
 );
 

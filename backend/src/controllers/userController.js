@@ -1,5 +1,22 @@
 import User from '../models/User.js';
 import asyncHandler from '../middleware/asyncHandler.js';
+import generateToken from '../utils/generateToken.js';
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phonePattern = /^\d{10}$/;
+
+const userPayload = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  phone: user.phone,
+  role: user.role,
+  isActive: user.isActive,
+  vendorStatus: user.vendorStatus,
+  vendorProfile: user.vendorProfile,
+  addresses: user.addresses,
+  token: generateToken(user._id)
+});
 
 export const getProfile = asyncHandler(async (req, res) => {
   res.json(req.user);
@@ -7,11 +24,33 @@ export const getProfile = asyncHandler(async (req, res) => {
 
 export const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
+  const nextEmail = req.body.email?.trim().toLowerCase();
+  const nextPhone = req.body.phone ? String(req.body.phone).replace(/\D/g, '') : user.phone;
+
+  if (nextEmail && !emailPattern.test(nextEmail)) {
+    res.status(400);
+    throw new Error('Enter a valid email address');
+  }
+
+  if (nextPhone && !phonePattern.test(nextPhone)) {
+    res.status(400);
+    throw new Error('Phone number must contain exactly 10 digits');
+  }
+
+  if (nextEmail && nextEmail !== user.email) {
+    const duplicate = await User.findOne({ email: nextEmail, _id: { $ne: user._id } });
+    if (duplicate) {
+      res.status(409);
+      throw new Error('Email is already registered');
+    }
+    user.email = nextEmail;
+  }
+
   user.name = req.body.name ?? user.name;
-  user.phone = req.body.phone ?? user.phone;
+  user.phone = nextPhone;
   if (req.body.password) user.password = req.body.password;
   await user.save();
-  res.json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role });
+  res.json(userPayload(user));
 });
 
 export const addAddress = asyncHandler(async (req, res) => {

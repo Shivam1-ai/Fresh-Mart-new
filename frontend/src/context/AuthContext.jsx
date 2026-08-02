@@ -6,26 +6,37 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('freshmart_user') || 'null'));
 
+  const syncUser = (nextUser) => {
+    if (nextUser) {
+      localStorage.setItem('freshmart_user', JSON.stringify(nextUser));
+    } else {
+      localStorage.removeItem('freshmart_user');
+    }
+
+    setUser(nextUser);
+  };
+
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('freshmart_user', JSON.stringify(data));
-    setUser(data);
+    syncUser(data);
     return data;
   };
 
   const register = async (payload) => {
     const { data } = await api.post('/auth/register', payload);
-    localStorage.setItem('freshmart_user', JSON.stringify(data));
-    setUser(data);
+    syncUser(data);
     return data;
   };
 
-  const logout = () => {
-    localStorage.removeItem('freshmart_user');
-    setUser(null);
+  const updateUser = (nextUser) => {
+    syncUser(nextUser);
   };
 
-  const value = useMemo(() => ({ user, login, register, logout }), [user]);
+  const logout = () => {
+    syncUser(null);
+  };
+
+  const value = useMemo(() => ({ user, login, register, updateUser, logout }), [user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

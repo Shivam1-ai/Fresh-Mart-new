@@ -1,15 +1,43 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import api from '../api/client.js';
+import { useAuth } from './AuthContext.jsx';
 
 const CartContext = createContext(null);
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState({ items: [] });
+  const { user } = useAuth();
 
   const loadCart = async () => {
     const { data } = await api.get('/cart');
     setCart(data);
   };
+
+  useEffect(() => {
+    let active = true;
+
+    const syncCart = async () => {
+      if (!user) {
+        setCart({ items: [] });
+        return;
+      }
+
+      setCart({ items: [] });
+
+      try {
+        const { data } = await api.get('/cart');
+        if (active) setCart(data);
+      } catch {
+        if (active) setCart({ items: [] });
+      }
+    };
+
+    syncCart();
+
+    return () => {
+      active = false;
+    };
+  }, [user?._id]);
 
   const addToCart = async (productId, quantity = 1) => {
     const { data } = await api.post('/cart/items', { productId, quantity });

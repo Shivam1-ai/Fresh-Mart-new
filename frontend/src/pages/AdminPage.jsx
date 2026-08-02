@@ -10,7 +10,6 @@ import {
   fetchAdminVendors,
   fetchPromotions,
   fetchRefundRequests,
-  fetchTransactions,
   rejectVendor,
   resolveRefundRequest
 } from '../api/adminApi.js';
@@ -33,7 +32,6 @@ const AdminPage = () => {
   const [promotions, setPromotions] = useState([]);
   const [refunds, setRefunds] = useState([]);
   const [analytics, setAnalytics] = useState(null);
-  const [transactions, setTransactions] = useState([]);
   const [users, setUsers] = useState([]);
   const [promotionForm, setPromotionForm] = useState(emptyPromotion);
   const [message, setMessage] = useState('');
@@ -45,13 +43,12 @@ const AdminPage = () => {
     const loadAdminData = async () => {
       try {
         setError('');
-        const [summaryData, vendorData, promotionData, refundData, analyticsData, transactionData, userData] = await Promise.all([
+        const [summaryData, vendorData, promotionData, refundData, analyticsData, userData] = await Promise.all([
           fetchAdminSummary(),
           fetchAdminVendors(),
           fetchPromotions(),
           fetchRefundRequests(),
           fetchAdminAnalytics(),
-          fetchTransactions(),
           fetchAdminUsers()
         ]);
 
@@ -60,7 +57,6 @@ const AdminPage = () => {
         setPromotions(promotionData);
         setRefunds(refundData);
         setAnalytics(analyticsData);
-        setTransactions(transactionData);
         setUsers(userData);
       } catch (err) {
         setError(err.response?.data?.message || 'Could not load admin dashboard.');
@@ -71,13 +67,12 @@ const AdminPage = () => {
   }, [user]);
 
   const refresh = async () => {
-    const [summaryData, vendorData, promotionData, refundData, analyticsData, transactionData, userData] = await Promise.all([
+    const [summaryData, vendorData, promotionData, refundData, analyticsData, userData] = await Promise.all([
       fetchAdminSummary(),
       fetchAdminVendors(),
       fetchPromotions(),
       fetchRefundRequests(),
       fetchAdminAnalytics(),
-      fetchTransactions(),
       fetchAdminUsers()
     ]);
 
@@ -86,7 +81,6 @@ const AdminPage = () => {
     setPromotions(promotionData);
     setRefunds(refundData);
     setAnalytics(analyticsData);
-    setTransactions(transactionData);
     setUsers(userData);
   };
 
@@ -138,7 +132,6 @@ const AdminPage = () => {
   const counts = summary?.counts || {};
   const pendingVendors = vendors.filter((vendor) => vendor.vendorStatus === 'pending');
   const lowStockProducts = summary?.lowStockProducts || [];
-  const recentOrders = summary?.recentOrders || [];
 
   return (
     <div className="space-y-6">
@@ -172,23 +165,6 @@ const AdminPage = () => {
               </div>
             ))}
             {!pendingVendors.length && <p className="text-slate-500">No pending vendor registrations.</p>}
-          </div>
-        </Panel>
-
-        <Panel title="Recent orders" icon={<CheckCircle2 />}>
-          <div className="space-y-3">
-            {recentOrders.map((order) => (
-              <div key={order._id} className="flex items-center justify-between rounded-lg border border-slate-100 p-3">
-                <div>
-                  <p className="font-semibold">#{order._id.slice(-6).toUpperCase()}</p>
-                  <p className="text-sm text-slate-500">{order.user?.name || 'Customer'}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold">Rs. {order.totalPrice}</p>
-                  <p className="text-sm text-slate-500">{order.status}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </Panel>
       </section>
