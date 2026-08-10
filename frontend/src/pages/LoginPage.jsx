@@ -1,6 +1,6 @@
 import { Leaf, Lock, Mail, Phone, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const roleOptions = [
@@ -25,6 +25,8 @@ const LoginPage = () => {
   useEffect(() => {
     if (location.state?.mode === 'register' || new URLSearchParams(location.search).get('mode') === 'register') {
       setMode('register');
+    } else {
+      setMode('login');
     }
   }, [location.state, location.search]);
 
@@ -110,6 +112,16 @@ const LoginPage = () => {
             </>
           )}
           <Field icon={<Lock className="h-5 w-5" />} type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          {mode === 'login' && (
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-bold text-leaf underline underline-offset-4 transition hover:text-emerald-700"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          )}
           <button disabled={submitting} className="w-full rounded-md bg-leaf px-4 py-3 font-bold text-white transition hover:bg-emerald-700 disabled:bg-slate-300">
             {submitting ? 'Please wait' : mode === 'login' ? 'Login' : 'Create account'}
           </button>

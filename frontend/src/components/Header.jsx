@@ -1,12 +1,14 @@
 import { Leaf, LogOut, Menu, ShoppingCart, User, X } from 'lucide-react';
 import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { flushSync } from 'react-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 
 const Header = () => {
   const { user, logout } = useAuth();
   const { itemCount, clearCart } = useCart();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   const linkClass = ({ isActive }) =>
@@ -15,6 +17,17 @@ const Header = () => {
     }`;
 
   const close = () => setOpen(false);
+  const handleLogout = (event) => {
+    event?.preventDefault();
+
+    flushSync(() => {
+      clearCart();
+      logout();
+      close();
+    });
+
+    navigate('/login', { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-emerald-100/80 bg-white/90 backdrop-blur">
@@ -34,18 +47,18 @@ const Header = () => {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="hidden items-center gap-2 text-sm font-semibold md:flex">
-            <NavLinks user={user} logout={logout} itemCount={itemCount} linkClass={linkClass} close={close} />
+            <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} />
           </div>
         </div>
         <div className={`${open ? 'grid' : 'hidden'} mt-4 gap-2 text-sm font-semibold md:hidden`}>
-          <NavLinks user={user} logout={logout} itemCount={itemCount} linkClass={linkClass} close={close} />
+          <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} />
         </div>
       </nav>
     </header>
   );
 };
 
-const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
+const NavLinks = ({ user, itemCount, linkClass, close, onLogout }) => (
   <>
     {!user ? (
       <>
@@ -72,11 +85,7 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
           <span>Profile</span>
         </NavLink>
         <button
-          onClick={() => {
-            clearCart();
-            logout();
-            close();
-          }}
+          onClick={onLogout}
           className="flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-2 text-slate-700 transition hover:bg-limewash hover:text-leaf"
         >
           <LogOut className="h-4 w-4" /> Logout
@@ -91,11 +100,7 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
         <NavLink to="/admin" onClick={close} className={linkClass}>Categories</NavLink>
         <NavLink to="/admin" onClick={close} className={linkClass}>Reports</NavLink>
         <button
-          onClick={() => {
-            clearCart();
-            logout();
-            close();
-          }}
+          onClick={onLogout}
           className="flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-2 text-slate-700 transition hover:bg-limewash hover:text-leaf"
         >
           <LogOut className="h-4 w-4" /> Logout
@@ -131,11 +136,7 @@ const NavLinks = ({ user, logout, itemCount, linkClass, close }) => (
           <span>Profile</span>
         </NavLink>
         <button
-          onClick={() => {
-            clearCart();
-            logout();
-            close();
-          }}
+          onClick={onLogout}
           className="flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-2 text-slate-700 transition hover:bg-limewash hover:text-leaf"
         >
           <LogOut className="h-4 w-4" /> Logout

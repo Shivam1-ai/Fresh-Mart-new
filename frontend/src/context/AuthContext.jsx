@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import api from '../api/client.js';
-import { broadcastAuthChange, clearStoredSession, persistStoredUser, readStoredUser, subscribeToAuthChanges } from '../utils/authSession.js';
+import { broadcastAuthChange, clearStoredSession, mergeStoredUser, persistStoredUser, readStoredUser, subscribeToAuthChanges } from '../utils/authSession.js';
 
 const AuthContext = createContext(null);
 
@@ -10,10 +10,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => subscribeToAuthChanges((nextUser) => setUser(nextUser)), []);
 
   const syncUser = (nextUser) => {
-    if (nextUser) persistStoredUser(nextUser);
+    const normalizedUser = mergeStoredUser(nextUser);
+
+    if (normalizedUser) persistStoredUser(normalizedUser);
     else clearStoredSession();
-    setUser(nextUser);
-    broadcastAuthChange(nextUser);
+
+    setUser(normalizedUser);
+    broadcastAuthChange(normalizedUser);
   };
 
   const login = async (email, password) => {

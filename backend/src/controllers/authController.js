@@ -1,6 +1,8 @@
+import crypto from 'crypto';
 import User from '../models/User.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import generateToken from '../utils/generateToken.js';
+import sendEmail from '../utils/sendEmail.js';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^\d{10}$/;
@@ -102,6 +104,12 @@ export const register = asyncHandler(async (req, res) => {
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(400);
+    throw new Error('Email and password are required');
+  }
+
   const user = await User.findOne({ email: email?.trim().toLowerCase() });
 
   if (!user || !(await user.matchPassword(password))) {
@@ -117,8 +125,76 @@ export const login = asyncHandler(async (req, res) => {
   res.json(userPayload(user));
 });
 
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const email = req.body.email?.trim().toLowerCase();
+
+  if (!email) {
+    res.status(400);
+    throw new Error('Email is required');
+  }
+
+  const user = await User.findOne({ email });
+
+  // Always respond with success to avoid email enumeration
+  if (!user) {
+    return res.json({ message: 'If that email exists, a reset link has been sent.' });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const hashed = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  user.resetPasswordToken = hashed;
+  user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+  await user.save();
+
+  const frontend = process.env.CLIENT_URL || 'http://localhost:5173';
+  const resetUrl = `${frontend}/#/reset-password/${resetToken}`;
+  const message = `You requested a password reset. Use the link below to reset your password (valid for 1 hour):\n\n${resetUrl}`;
+
+  try {
+    await sendEmail({ to: user.email, subject: 'Password reset', text: message });
+    res.json({ message: 'If that email exists, a reset link has been sent.' });
+  } catch (err) {
+  console.error('Email Error:', err);
+
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.status(500);
+  throw new Error(err.message);
+}
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    res.status(400);
+    throw new Error('Token and new password are required');
+  }
+
+  const hashed = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken: hashed,
+    resetPasswordExpires: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error('Invalid or expired reset token');
+  }
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.json({ message: 'Password has been reset', ...userPayload(user) });
+});
+
 export const registerVendor = asyncHandler(async (req, res) => {
   req.body.role = 'vendor';
   return register(req, res);
 });
-

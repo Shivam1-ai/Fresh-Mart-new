@@ -45,6 +45,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Fields for password reset
+userSchema.add({
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
+});
+
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);

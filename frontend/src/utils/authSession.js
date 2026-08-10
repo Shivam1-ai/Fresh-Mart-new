@@ -4,6 +4,14 @@ const AUTH_CHANGE_EVENT = 'freshmart-auth-change';
 
 const isBrowser = () => typeof window !== 'undefined';
 
+const removeStorageItem = (storage, key) => {
+  try {
+    storage.removeItem(key);
+  } catch {
+    // Ignore storage errors so logout can still continue.
+  }
+};
+
 export const isTokenExpired = (token) => {
   if (!token) return true;
 
@@ -27,13 +35,13 @@ export const readStoredUser = () => {
 
     const parsed = JSON.parse(raw);
     if (!parsed?.token || isTokenExpired(parsed.token)) {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      removeStorageItem(localStorage, AUTH_STORAGE_KEY);
       return null;
     }
 
     return parsed;
   } catch {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    removeStorageItem(localStorage, AUTH_STORAGE_KEY);
     return null;
   }
 };
@@ -42,20 +50,24 @@ export const clearCachedCartState = () => {
   if (!isBrowser()) return;
 
   [localStorage, sessionStorage].forEach((storage) => {
-    const keys = [];
-    for (let index = 0; index < storage.length; index += 1) {
-      const key = storage.key(index);
-      if (key && key.startsWith(CART_STORAGE_PREFIX)) keys.push(key);
+    try {
+      const keys = [];
+      for (let index = 0; index < storage.length; index += 1) {
+        const key = storage.key(index);
+        if (key && key.startsWith(CART_STORAGE_PREFIX)) keys.push(key);
+      }
+      keys.forEach((key) => removeStorageItem(storage, key));
+    } catch {
+      // Ignore storage errors so logout can still continue.
     }
-    keys.forEach((key) => storage.removeItem(key));
   });
 };
 
 export const clearStoredSession = () => {
   if (!isBrowser()) return;
 
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-  sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  removeStorageItem(localStorage, AUTH_STORAGE_KEY);
+  removeStorageItem(sessionStorage, AUTH_STORAGE_KEY);
   clearCachedCartState();
 };
 
@@ -63,6 +75,17 @@ export const persistStoredUser = (user) => {
   if (!isBrowser()) return;
 
   if (user) localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+};
+
+export const mergeStoredUser = (nextUser) => {
+  if (!isBrowser()) return nextUser;
+
+  if (!nextUser) return null;
+
+  const currentUser = readStoredUser();
+  if (nextUser.token) return nextUser;
+
+  return currentUser?.token ? { ...currentUser, ...nextUser, token: currentUser.token } : nextUser;
 };
 
 export const broadcastAuthChange = (user) => {

@@ -8,6 +8,8 @@ const AdminPage = lazy(() => import('./pages/AdminPage.jsx'));
 const CartPage = lazy(() => import('./pages/CartPage.jsx'));
 const HomePage = lazy(() => import('./pages/HomePage.jsx'));
 const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage.jsx'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.jsx'));
 const ProductPage = lazy(() => import('./pages/ProductPage.jsx'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'));
 const VendorPage = lazy(() => import('./pages/VendorPage.jsx'));
@@ -49,6 +51,8 @@ const App = () => (
           <Route path="/products" element={<HomePage />} />
           <Route path="/products/:id" element={<ProductPage />} />
           <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/cart" element={<CustomerRoute><CartPage /></CustomerRoute>} />
           <Route path="/orders" element={<CustomerRoute><ProfilePage /></CustomerRoute>} />
           <Route path="/profile" element={<CustomerRoute><ProfilePage /></CustomerRoute>} />

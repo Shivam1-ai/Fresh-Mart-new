@@ -1,12 +1,18 @@
 import axios from 'axios';
-import { broadcastAuthChange, clearStoredSession } from '../utils/authSession.js';
+import { broadcastAuthChange, clearStoredSession, readStoredUser } from '../utils/authSession.js';
+
+const apiBaseURL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : null);
+
+if (!apiBaseURL) {
+  throw new Error('VITE_API_URL is required in production');
+}
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  baseURL: apiBaseURL
 });
 
 api.interceptors.request.use((config) => {
-  const user = JSON.parse(localStorage.getItem('freshmart_user') || 'null');
+  const user = readStoredUser();
   if (user?.token) config.headers.Authorization = `Bearer ${user.token}`;
   return config;
 });
@@ -24,4 +30,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-

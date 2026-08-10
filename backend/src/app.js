@@ -18,12 +18,27 @@ import wishlistRoutes from './routes/wishlistRoutes.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 
 const app = express();
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(helmet());
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 app.use(mongoSanitize());
-app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin ${origin}`));
+    },
+    credentials: false
+  })
+);
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 200 }));
 
 if (process.env.NODE_ENV !== 'test') {
