@@ -130,7 +130,7 @@ await Product.insertMany([
     mrp: 105,
     unit: '150 g',
     countInStock: 58,
-    images: [{ url: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=800&q=80' }]
+    images: [{ url: 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?auto=format&fit=crop&w=800&q=80' }]
   },
   {
     name: 'Trail Mix Energy Pack',
@@ -141,7 +141,7 @@ await Product.insertMany([
     mrp: 220,
     unit: '200 g',
     countInStock: 36,
-    images: [{ url: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?auto=format&fit=crop&w=800&q=80' }]
+    images: [{ url: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?auto=format&fit=crop&w=800&q=80' }]
   },
   {
     name: 'Classic Salted Popcorn',
