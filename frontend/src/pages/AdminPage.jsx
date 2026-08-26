@@ -146,7 +146,7 @@ const AdminPage = () => {
       <section className="grid gap-4 md:grid-cols-4">
         <Metric icon={<Users />} label="Users" value={counts.users || users.length} />
         <Metric icon={<Store />} label="Vendors" value={counts.vendors || vendors.length} />
-        <Metric icon={<PackageSearch />} label="Orders" value={counts.orders || recentOrders.length} />
+        <Metric icon={<PackageSearch />} label="Orders" value={counts.orders || 0} />
         <Metric icon={<BadgePercent />} label="Revenue" value={`Rs. ${counts.revenue || 0}`} />
       </section>
 
