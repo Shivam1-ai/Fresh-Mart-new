@@ -179,17 +179,20 @@ const VendorPage = () => {
             </div>
           </div>
           <form onSubmit={handleRegister} className="mt-6 grid gap-3 sm:grid-cols-2">
-            {['name', 'email', 'phone', 'password', 'storeName', 'businessName', 'gstNumber', 'pickupAddress', 'supportEmail'].map((field) => (
-              <input
-                key={field}
-                type={field === 'email' ? 'email' : field === 'password' ? 'password' : 'text'}
-                required={field !== 'phone' && field !== 'supportEmail' && field !== 'gstNumber'}
-                value={vendorForm[field]}
-                onChange={(event) => setVendorForm({ ...vendorForm, [field]: event.target.value })}
-                placeholder={field[0].toUpperCase() + field.slice(1)}
-                className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf"
-              />
-            ))}
+            {message && (
+              <p className="sm:col-span-2 rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">{message}</p>
+           )}
+           {['name', 'email', 'phone', 'password', 'storeName', 'businessName', 'gstNumber', 'pickupAddress', 'supportEmail'].map((field) => (
+             <input
+               key={field}
+               type={field === 'email' ? 'email' : field === 'password' ? 'password' : 'text'}
+               required={field !== 'supportEmail' && field !== 'gstNumber'}
+               value={vendorForm[field]}
+               onChange={(event) => setVendorForm({ ...vendorForm, [field]: event.target.value })}
+               placeholder={field === 'phone' ? 'Phone (10 digits)' : field[0].toUpperCase() + field.slice(1)}
+               className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf"
+             />
+           ))}
             <textarea
               required
               rows="4"
