@@ -197,7 +197,7 @@ const HomePage = () => {
         ))}
       </div>
 
-      <div className="flex items-end justify-between gap-4">
+      <div id="shop-groceries" className="flex items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black">Shop groceries</h2>
           <p className="mt-1 text-sm text-slate-500">
