@@ -100,10 +100,10 @@ const HomePage = () => {
               Fruits, vegetables, chilled dairy, drinks, and snacks delivered fresh with simple COD checkout.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <button onClick={() => setCategory('Vegetables')} className="rounded-full bg-white px-5 py-3 text-sm font-black text-leaf transition hover:bg-limewash">
+              <button onClick={() => { setCategory('Vegetables'); document.getElementById('shop-groceries')?.scrollIntoView({ behavior: 'smooth' }); }} className="rounded-full bg-white px-5 py-3 text-sm font-black text-leaf transition hover:bg-limewash" >
                 Shop fresh produce
               </button>
-              <button onClick={() => setCategory('Snacks')} className="rounded-full border border-white/70 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15">
+              <button onClick={() => { setCategory('Snacks'); document.getElementById('shop-groceries')?.scrollIntoView({ behavior: 'smooth' }); }} className="rounded-full border border-white/70 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15" >
                 Browse snacks
               </button>
             </div>
