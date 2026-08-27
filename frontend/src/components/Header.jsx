@@ -17,6 +17,19 @@ const Header = () => {
     }`;
 
   const close = () => setOpen(false);
+
+  const scrollToVendorSection = (sectionId) => (event) => {
+    event.preventDefault();
+    close();
+    const scrollToId = () => document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+    if (window.location.hash.startsWith('#/vendor')) {
+      scrollToId();
+    } else {
+      navigate('/vendor');
+      setTimeout(scrollToId, 150);
+    }
+  };
+
   const handleLogout = (event) => {
     event?.preventDefault();
 
@@ -47,18 +60,18 @@ const Header = () => {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="hidden items-center gap-2 text-sm font-semibold md:flex">
-            <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} />
+            <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} />
           </div>
         </div>
         <div className={`${open ? 'grid' : 'hidden'} mt-4 gap-2 text-sm font-semibold md:hidden`}>
-          <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} />
+          <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} />
         </div>
       </nav>
     </header>
   );
 };
 
-const NavLinks = ({ user, itemCount, linkClass, close, onLogout }) => (
+const NavLinks = ({ user, itemCount, linkClass, close, onLogout, scrollToVendorSection }) => (
   <>
     {!user ? (
       <>
@@ -73,10 +86,10 @@ const NavLinks = ({ user, itemCount, linkClass, close, onLogout }) => (
       </>
     ) : user.role === 'vendor' ? (
       <>
-        <NavLink to="/vendor" onClick={close} className={linkClass}>Dashboard</NavLink>
-        <NavLink to="/vendor" onClick={close} className={linkClass}>Orders</NavLink>
-        <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
-        <NavLink to="/vendor" onClick={close} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
+        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-dashboard-top')} className={linkClass}>Dashboard</NavLink>
+        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-orders-section')} className={linkClass}>Orders</NavLink>
+        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-products-list-section')} className={linkClass}>Products</NavLink>
+        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-profile-section')} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
           {user.profileImage ? (
             <img src={user.profileImage} alt={user.name || 'Profile'} className="h-5 w-5 rounded-full object-cover" />
           ) : (
