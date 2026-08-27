@@ -232,7 +232,7 @@ const VendorPage = () => {
   const lowStockProducts = dashboard?.lowStockProducts || [];
 
   return (
-    <div className="space-y-6">
+    <div id="vendor-dashboard-top" className="space-y-6">
       <div>
         <h1 className="text-3xl font-black">Vendor dashboard</h1>
         <p className="mt-1 text-slate-500">Manage inventory, pricing, orders, earnings, and customer questions.</p>
@@ -248,7 +248,7 @@ const VendorPage = () => {
         <Metric icon={<Truck />} label="Items sold" value={counts.itemsSold || 0} />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1fr_360px]">
+      <section id="vendor-profile-section" className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Panel title="Vendor profile" icon={<Store />}>
           <form onSubmit={handleProfileSave} className="grid gap-3 sm:grid-cols-2">
             <input value={profileForm.name} onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })} placeholder="Name" className="rounded-md border border-slate-200 px-3 py-3 outline-none focus:border-leaf" />
@@ -298,6 +298,7 @@ const VendorPage = () => {
           </form>
         </Panel>
 
+        <div id="vendor-orders-section">
         <Panel title="Order management" icon={<ClipboardList />}>
           <div className="space-y-3">
             {orders.map((order) => (
@@ -320,9 +321,11 @@ const VendorPage = () => {
             {!orders.length && <p className="text-slate-500">No vendor orders yet.</p>}
           </div>
         </Panel>
+        </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
+        <div id="vendor-products-list-section">
         <Panel title="Products" icon={<Store />}>
           <div className="space-y-3">
             {products.map((product) => (
@@ -339,6 +342,7 @@ const VendorPage = () => {
             ))}
           </div>
         </Panel>
+        </div>
 
         <Panel title="Customer inquiries" icon={<CornerDownLeft />}>
           <div className="space-y-3">
