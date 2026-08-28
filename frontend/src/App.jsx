@@ -4,6 +4,11 @@ import Header from './components/Header.jsx';
 import { AdminRoute, CustomerRoute, VendorRoute } from './components/ProtectedRoute.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 const AdminPage = lazy(() => import('./pages/AdminPage.jsx'));
+const AdminDashboardTab = lazy(() => import('./pages/admin/AdminDashboardTab.jsx'));
+const AdminUsersTab = lazy(() => import('./pages/admin/AdminUsersTab.jsx'));
+const AdminVendorsTab = lazy(() => import('./pages/admin/AdminVendorsTab.jsx'));
+const AdminCategoriesTab = lazy(() => import('./pages/admin/AdminCategoriesTab.jsx'));
+const AdminReportsTab = lazy(() => import('./pages/admin/AdminReportsTab.jsx'));
 const CartPage = lazy(() => import('./pages/CartPage.jsx'));
 const HomePage = lazy(() => import('./pages/HomePage.jsx'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage.jsx'));
@@ -52,7 +57,13 @@ const App = () => (
           <Route path="/orders" element={<CustomerRoute><OrdersPage /></CustomerRoute>} />
           <Route path="/profile" element={<CustomerRoute><ProfilePage /></CustomerRoute>} />
           <Route path="/vendor" element={<VendorRoute><VendorPage /></VendorRoute>} />
-          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>}>
+            <Route index element={<AdminDashboardTab />} />
+            <Route path="users" element={<AdminUsersTab />} />
+            <Route path="vendors" element={<AdminVendorsTab />} />
+            <Route path="categories" element={<AdminCategoriesTab />} />
+            <Route path="reports" element={<AdminReportsTab />} />
+          </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
