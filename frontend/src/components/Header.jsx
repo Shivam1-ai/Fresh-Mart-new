@@ -113,12 +113,12 @@ const NavLinks = ({ user, itemCount, linkClass, close, onLogout, scrollToVendorS
       </>
     ) : user.role === 'admin' ? (
       <>
-        <NavLink to="/admin" onClick={close} className={linkClass}>Dashboard</NavLink>
-        <NavLink to="/admin" onClick={close} className={linkClass}>Users</NavLink>
-        <NavLink to="/admin" onClick={close} className={linkClass}>Vendors</NavLink>
+        <NavLink to="/admin" end onClick={close} className={linkClass}>Dashboard</NavLink>
+        <NavLink to="/admin/users" onClick={close} className={linkClass}>Users</NavLink>
+        <NavLink to="/admin/vendors" onClick={close} className={linkClass}>Vendors</NavLink>
         <NavLink to="/products" onClick={close} className={linkClass}>Products</NavLink>
-        <NavLink to="/admin" onClick={close} className={linkClass}>Categories</NavLink>
-        <NavLink to="/admin" onClick={close} className={linkClass}>Reports</NavLink>
+        <NavLink to="/admin/categories" onClick={close} className={linkClass}>Categories</NavLink>
+        <NavLink to="/admin/reports" onClick={close} className={linkClass}>Reports</NavLink>
         <button
           onClick={onLogout}
           className="flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-2 text-slate-700 transition hover:bg-limewash hover:text-leaf"
