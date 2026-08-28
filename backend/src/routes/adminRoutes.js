@@ -34,5 +34,6 @@ router.route('/promotions').get(protect, admin, listPromotions).post(protect, ad
 router.route('/promotions/:id').put(protect, admin, updatePromotion).delete(protect, admin, deletePromotion);
 router.get('/refunds', protect, admin, listRefundRequests);
 router.patch('/refunds/:id', protect, admin, updateRefundRequest);
+router.get('/transactions', protect, admin, getTransactions);
 
 export default router;
