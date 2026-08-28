@@ -74,3 +74,7 @@ export const updateUserStatus = async (userId, payload) => {
   const { data } = await api.patch(`/admin/users/${userId}/status`, payload);
   return data;
 };
+export const fetchTransactions = async () => {
+  const { data } = await api.get('/admin/transactions');
+  return data;
+};
