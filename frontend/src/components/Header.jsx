@@ -10,10 +10,16 @@ const Header = () => {
   const { itemCount, clearCart } = useCart();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [activeVendorSection, setActiveVendorSection] = useState('vendor-dashboard-top');
 
   const linkClass = ({ isActive }) =>
     `rounded-full px-3 py-2 transition ${
       isActive ? 'bg-leaf text-white shadow-sm' : 'text-slate-700 hover:bg-limewash hover:text-leaf'
+    }`;
+
+  const vendorLinkClass = (sectionId) =>
+    `rounded-full px-3 py-2 transition ${
+      activeVendorSection === sectionId ? 'bg-leaf text-white shadow-sm' : 'text-slate-700 hover:bg-limewash hover:text-leaf'
     }`;
 
   const close = () => setOpen(false);
@@ -21,6 +27,7 @@ const Header = () => {
   const scrollToVendorSection = (sectionId) => (event) => {
     event.preventDefault();
     close();
+    setActiveVendorSection(sectionId);
     const scrollToId = () => document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
     if (window.location.hash.startsWith('#/vendor')) {
       scrollToId();
@@ -60,18 +67,18 @@ const Header = () => {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="hidden items-center gap-2 text-sm font-semibold md:flex">
-            <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} />
+            <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} vendorLinkClass={vendorLinkClass} />
           </div>
         </div>
         <div className={`${open ? 'grid' : 'hidden'} mt-4 gap-2 text-sm font-semibold md:hidden`}>
-          <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} />
+          <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} vendorLinkClass={vendorLinkClass} />
         </div>
       </nav>
     </header>
   );
 };
 
-const NavLinks = ({ user, itemCount, linkClass, close, onLogout, scrollToVendorSection }) => (
+const NavLinks = ({ user, itemCount, linkClass, close, onLogout, scrollToVendorSection, vendorLinkClass }) => (
   <>
     {!user ? (
       <>
@@ -86,17 +93,17 @@ const NavLinks = ({ user, itemCount, linkClass, close, onLogout, scrollToVendorS
       </>
     ) : user.role === 'vendor' ? (
       <>
-        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-dashboard-top')} className={linkClass}>Dashboard</NavLink>
-        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-orders-section')} className={linkClass}>Orders</NavLink>
-        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-products-list-section')} className={linkClass}>Products</NavLink>
-        <NavLink to="/vendor" onClick={scrollToVendorSection('vendor-profile-section')} className={({ isActive }) => `${linkClass({ isActive })} flex items-center gap-2`}>
+        <Link to="/vendor" onClick={scrollToVendorSection('vendor-dashboard-top')} className={vendorLinkClass('vendor-dashboard-top')}>Dashboard</Link>
+        <Link to="/vendor" onClick={scrollToVendorSection('vendor-orders-section')} className={vendorLinkClass('vendor-orders-section')}>Orders</Link>
+        <Link to="/vendor" onClick={scrollToVendorSection('vendor-products-list-section')} className={vendorLinkClass('vendor-products-list-section')}>Products</Link>
+        <Link to="/vendor" onClick={scrollToVendorSection('vendor-profile-section')} className={`${vendorLinkClass('vendor-profile-section')} flex items-center gap-2`}>
           {user.profileImage ? (
             <img src={user.profileImage} alt={user.name || 'Profile'} className="h-5 w-5 rounded-full object-cover" />
           ) : (
             <User className="h-5 w-5" aria-hidden="true" />
           )}
           <span>Profile</span>
-        </NavLink>
+        </Link>
         <button
           onClick={onLogout}
           className="flex items-center gap-2 rounded-full border border-emerald-100 px-3 py-2 text-slate-700 transition hover:bg-limewash hover:text-leaf"
