@@ -24,6 +24,8 @@ const AdminDashboardTab = () => {
   const { summary, vendors, promotions, refunds, users, refresh } = useOutletContext();
   const [promotionForm, setPromotionForm] = useState(emptyPromotion);
   const [message, setMessage] = useState('');
+  const [refundBusyId, setRefundBusyId] = useState(null);
+  const [refundError, setRefundError] = useState('');
 
   const counts = summary?.counts || {};
   const pendingVendors = vendors.filter((vendor) => vendor.vendorStatus === 'pending');
@@ -62,8 +64,16 @@ const AdminDashboardTab = () => {
   };
 
   const handleResolveRefund = async (refundId) => {
-    await resolveRefundRequest(refundId, { status: 'Resolved', resolutionNote: 'Processed by admin' });
-    await refresh();
+    setRefundBusyId(refundId);
+    setRefundError('');
+    try {
+      await resolveRefundRequest(refundId, { status: 'Resolved', resolutionNote: 'Processed by admin' });
+      await refresh();
+    } catch (err) {
+      setRefundError(err.response?.data?.message || 'Could not resolve this refund. Please try again.');
+    } finally {
+      setRefundBusyId(null);
+    }
   };
 
   const handleDeletePromotion = async (promotionId) => {
@@ -148,19 +158,37 @@ const AdminDashboardTab = () => {
         </Panel>
 
         <Panel title="Refunds & disputes" icon={<CircleAlert />}>
+          {refundError && <p className="mb-3 rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">{refundError}</p>}
           <div className="space-y-3">
-            {refunds.map((refund) => (
-              <div key={refund._id} className="rounded-lg border border-slate-100 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="font-semibold">{refund.type}</p>
-                    <p className="text-sm text-slate-500">{refund.user?.name || 'Customer'} - {refund.status}</p>
+            {refunds.map((refund) => {
+              const isResolved = refund.status === 'Resolved';
+              const isBusy = refundBusyId === refund._id;
+              return (
+                <div key={refund._id} className="rounded-lg border border-slate-100 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="font-semibold">{refund.type}</p>
+                      <p className="text-sm text-slate-500">
+                        {refund.user?.name || 'Customer'} -{' '}
+                        <span className={isResolved ? 'font-bold text-leaf' : ''}>{refund.status}</span>
+                      </p>
+                    </div>
+                    {isResolved ? (
+                      <span className="rounded-full bg-limewash px-3 py-2 text-sm font-bold text-leaf">Resolved</span>
+                    ) : (
+                      <button
+                        onClick={() => handleResolveRefund(refund._id)}
+                        disabled={isBusy}
+                        className="rounded-full bg-leaf px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
+                      >
+                        {isBusy ? 'Resolving...' : 'Resolve'}
+                      </button>
+                    )}
                   </div>
-                  <button onClick={() => handleResolveRefund(refund._id)} className="rounded-full bg-leaf px-3 py-2 text-sm font-bold text-white">Resolve</button>
+                  <p className="mt-2 text-sm text-slate-600">{refund.reason}</p>
                 </div>
-                <p className="mt-2 text-sm text-slate-600">{refund.reason}</p>
-              </div>
-            ))}
+              );
+            })}
             {!refunds.length && <p className="text-slate-500">No refund requests to review.</p>}
           </div>
         </Panel>
