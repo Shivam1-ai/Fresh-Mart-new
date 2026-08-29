@@ -198,3 +198,4 @@ const AdminDashboardTab = () => {
 };
 
 export default AdminDashboardTab;
+
