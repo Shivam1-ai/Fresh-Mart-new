@@ -1,6 +1,7 @@
 import Cart from '../models/Cart.js';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
+import Promotion from '../models/Promotion.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 
 const buildTrackingEvent = (status, note, location) => ({
@@ -31,7 +32,35 @@ export const createOrder = asyncHandler(async (req, res) => {
   const itemsPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingPrice = itemsPrice >= 499 ? 0 : 49;
   const taxPrice = Number((itemsPrice * 0.05).toFixed(2));
-  const totalPrice = Number((itemsPrice + shippingPrice + taxPrice).toFixed(2));
+
+  let discountAmount = 0;
+  let appliedPromotion = null;
+
+  if (req.body.promoCode) {
+    const promotion = await Promotion.findOne({ code: req.body.promoCode.toUpperCase().trim() });
+    const now = new Date();
+    const isValid =
+      promotion &&
+      promotion.isActive &&
+      (!promotion.startsAt || now >= promotion.startsAt) &&
+      (!promotion.endsAt || now <= promotion.endsAt) &&
+      (!promotion.maxUsage || promotion.usageCount < promotion.maxUsage) &&
+      itemsPrice >= (promotion.minOrderAmount || 0);
+
+    if (!isValid) {
+      res.status(400);
+      throw new Error('Promo code is no longer valid for this order');
+    }
+
+    discountAmount =
+      promotion.discountType === 'percentage'
+        ? Number(((itemsPrice * promotion.value) / 100).toFixed(2))
+        : Number(Math.min(promotion.value, itemsPrice).toFixed(2));
+
+    appliedPromotion = promotion;
+  }
+
+  const totalPrice = Number((itemsPrice + shippingPrice + taxPrice - discountAmount).toFixed(2));
 
   const order = await Order.create({
     user: req.user._id,
@@ -43,8 +72,15 @@ export const createOrder = asyncHandler(async (req, res) => {
     itemsPrice,
     shippingPrice,
     taxPrice,
+    discountAmount,
+    promoCode: appliedPromotion?.code,
     totalPrice
   });
+
+  if (appliedPromotion) {
+    appliedPromotion.usageCount += 1;
+    await appliedPromotion.save();
+  }
 
   await Promise.all(
     cart.items.map((entry) =>
@@ -146,4 +182,3 @@ export const updateOrderTracking = asyncHandler(async (req, res) => {
 
   res.json(order);
 });
-
