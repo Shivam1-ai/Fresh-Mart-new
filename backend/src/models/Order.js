@@ -39,6 +39,8 @@ const orderSchema = new mongoose.Schema(
     itemsPrice: { type: Number, required: true, default: 0 },
     shippingPrice: { type: Number, required: true, default: 0 },
     taxPrice: { type: Number, required: true, default: 0 },
+    discountAmount: { type: Number, default: 0 },
+    promoCode: { type: String, trim: true, uppercase: true },
     totalPrice: { type: Number, required: true, default: 0 },
     status: {
       type: String,
@@ -53,4 +55,3 @@ const orderSchema = new mongoose.Schema(
 
 const Order = mongoose.model('Order', orderSchema);
 export default Order;
-
