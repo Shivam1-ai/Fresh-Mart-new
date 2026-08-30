@@ -1,4 +1,4 @@
-import { Leaf, Lock, Mail, Phone, User } from 'lucide-react';
+import { Eye, EyeOff, Leaf, Lock, Mail, Phone, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -20,6 +20,7 @@ const LoginPage = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: 'user', storeName: '', businessName: '', gstNumber: '', pickupAddress: '', description: '', supportEmail: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const phoneError = mode === 'register' && form.phone && !phonePattern.test(form.phone) ? 'Phone number must contain exactly 10 digits.' : '';
 
   useEffect(() => {
@@ -111,7 +112,23 @@ const LoginPage = () => {
               )}
             </>
           )}
-          <Field icon={<Lock className="h-5 w-5" />} type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <Field
+            icon={<Lock className="h-5 w-5" />}
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="text-slate-400 transition hover:text-leaf"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            }
+          />
           {mode === 'login' && (
             <div className="flex justify-end">
               <Link
@@ -131,10 +148,11 @@ const LoginPage = () => {
   );
 };
 
-const Field = ({ icon, ...props }) => (
+const Field = ({ icon, trailing, ...props }) => (
   <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 focus-within:border-leaf focus-within:bg-white">
     <span className="text-slate-400">{icon}</span>
     <input required className="w-full bg-transparent py-3 outline-none" {...props} />
+    {trailing}
   </label>
 );
 
