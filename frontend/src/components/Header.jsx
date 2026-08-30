@@ -61,16 +61,16 @@ const Header = () => {
           </Link>
           <button
             onClick={() => setOpen((value) => !value)}
-            className="rounded-full border border-emerald-100 p-2 text-slate-700 md:hidden"
+            className="rounded-full border border-emerald-100 p-2 text-slate-700 lg:hidden"
             aria-label="Toggle navigation"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <div className="hidden items-center gap-2 text-sm font-semibold md:flex">
+          <div className="hidden items-center gap-2 text-sm font-semibold lg:flex lg:flex-wrap lg:justify-end">
             <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} vendorLinkClass={vendorLinkClass} />
           </div>
         </div>
-        <div className={`${open ? 'grid' : 'hidden'} mt-4 gap-2 text-sm font-semibold md:hidden`}>
+        <div className={`${open ? 'grid' : 'hidden'} mt-4 gap-2 text-sm font-semibold lg:hidden`}>
           <NavLinks user={user} itemCount={itemCount} linkClass={linkClass} close={close} onLogout={handleLogout} scrollToVendorSection={scrollToVendorSection} vendorLinkClass={vendorLinkClass} />
         </div>
       </nav>
