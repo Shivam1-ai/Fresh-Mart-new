@@ -11,6 +11,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import inquiryRoutes from './routes/inquiryRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import promotionRoutes from './routes/promotionRoutes.js';
 import refundRoutes from './routes/refundRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
@@ -55,10 +56,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/promotions', promotionRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
 export default app;
-
