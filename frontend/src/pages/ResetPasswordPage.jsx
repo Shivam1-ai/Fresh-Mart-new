@@ -1,4 +1,4 @@
-import { Lock } from 'lucide-react';
+import { Eye, EyeOff, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { resetPassword as resetPasswordApi } from '../api/authApi.js';
@@ -12,6 +12,8 @@ const ResetPasswordPage = () => {
   const [confirm, setConfirm] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -40,11 +42,27 @@ const ResetPasswordPage = () => {
       <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 focus-within:border-leaf focus-within:bg-white">
           <span className="text-slate-400"><Lock className="h-5 w-5" /></span>
-          <input required type="password" placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-transparent py-3 outline-none" />
+          <input required type={showPassword ? 'text' : 'password'} placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-transparent py-3 outline-none" />
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            className="text-slate-400 transition hover:text-leaf"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
         </label>
         <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 focus-within:border-leaf focus-within:bg-white">
           <span className="text-slate-400"><Lock className="h-5 w-5" /></span>
-          <input required type="password" placeholder="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full bg-transparent py-3 outline-none" />
+          <input required type={showConfirm ? 'text' : 'password'} placeholder="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full bg-transparent py-3 outline-none" />
+          <button
+            type="button"
+            onClick={() => setShowConfirm((value) => !value)}
+            className="text-slate-400 transition hover:text-leaf"
+            aria-label={showConfirm ? 'Hide password' : 'Show password'}
+          >
+            {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
         </label>
         <button disabled={submitting} className="w-full rounded-md bg-leaf px-4 py-3 font-bold text-white transition hover:bg-emerald-700 disabled:bg-slate-300">
           {submitting ? 'Please wait' : 'Reset password'}
