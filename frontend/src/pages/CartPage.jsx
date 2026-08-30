@@ -1,7 +1,8 @@
-import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { CheckCircle2, Minus, Plus, ShoppingBag, Tag, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client.js';
+import { validatePromoCode } from '../api/promotionApi.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
 
@@ -11,19 +12,54 @@ const CartPage = () => {
   const [shippingAddress, setShippingAddress] = useState({ street: '', city: '', state: '', pincode: '', phone: '' });
   const [placing, setPlacing] = useState(false);
   const [message, setMessage] = useState('');
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoError, setPromoError] = useState('');
+  const [checkingPromo, setCheckingPromo] = useState(false);
 
   const shipping = subtotal >= 499 || subtotal === 0 ? 0 : 49;
   const tax = Number((subtotal * 0.05).toFixed(2));
-  const total = Number((subtotal + shipping + tax).toFixed(2));
+  const discount = appliedPromo?.discountAmount || 0;
+  const total = Number((subtotal + shipping + tax - discount).toFixed(2));
+
+  const handleApplyPromo = async (event) => {
+    event.preventDefault();
+    if (!promoInput.trim()) return;
+
+    setCheckingPromo(true);
+    setPromoError('');
+    try {
+      const result = await validatePromoCode(promoInput.trim(), subtotal);
+      setAppliedPromo(result);
+      setPromoInput('');
+    } catch (error) {
+      setAppliedPromo(null);
+      setPromoError(error.response?.data?.message || 'Could not apply this promo code.');
+    } finally {
+      setCheckingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoError('');
+  };
 
   const placeOrder = async (event) => {
     event.preventDefault();
     setMessage('');
     setPlacing(true);
     try {
-      await api.post('/orders', { shippingAddress, paymentMethod: 'COD' });
+      await api.post('/orders', {
+        shippingAddress,
+        paymentMethod: 'COD',
+        promoCode: appliedPromo?.code
+      });
       clearCart();
       setShippingAddress({ street: '', city: '', state: '', pincode: '', phone: '' });
+      setAppliedPromo(null);
+      setPromoInput('');
+      setPromoError('');
       setMessage('Order placed successfully. You can track it from your profile.');
     } catch (error) {
       setMessage(error.response?.data?.message || 'Could not place this order.');
@@ -76,10 +112,49 @@ const CartPage = () => {
       </section>
       <aside className="h-fit rounded-lg bg-white p-5 shadow-sm">
         <h2 className="text-lg font-black">Order summary</h2>
+
+        <div className="mt-4">
+          {appliedPromo ? (
+            <div className="flex items-center justify-between rounded-md border border-leaf bg-limewash px-3 py-2">
+              <div className="flex items-center gap-2 text-sm font-bold text-leaf">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>{appliedPromo.code} applied</span>
+              </div>
+              <button type="button" onClick={handleRemovePromo} aria-label="Remove promo code" className="text-leaf">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleApplyPromo} className="flex gap-2">
+              <div className="flex flex-1 items-center gap-2 rounded-md border border-slate-200 px-3 focus-within:border-leaf">
+                <Tag className="h-4 w-4 text-slate-400" />
+                <input
+                  value={promoInput}
+                  onChange={(event) => setPromoInput(event.target.value.toUpperCase())}
+                  placeholder="Promo code"
+                  disabled={!cart.items?.length}
+                  className="w-full py-2 text-sm outline-none disabled:bg-white"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!promoInput.trim() || checkingPromo || !cart.items?.length}
+                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {checkingPromo ? 'Checking...' : 'Apply'}
+              </button>
+            </form>
+          )}
+          {promoError && <p className="mt-2 text-sm font-semibold text-tomato">{promoError}</p>}
+        </div>
+
         <div className="mt-4 space-y-3 text-sm">
           <div className="flex justify-between"><span>Subtotal</span><strong>Rs. {subtotal}</strong></div>
           <div className="flex justify-between"><span>Delivery</span><strong>{shipping ? `Rs. ${shipping}` : 'Free'}</strong></div>
           <div className="flex justify-between"><span>Tax</span><strong>Rs. {tax}</strong></div>
+          {discount > 0 && (
+            <div className="flex justify-between text-leaf"><span>Discount ({appliedPromo.code})</span><strong>-Rs. {discount}</strong></div>
+          )}
           <div className="border-t border-slate-100 pt-3 flex justify-between text-base"><span>Total</span><strong>Rs. {total}</strong></div>
         </div>
         <form onSubmit={placeOrder} className="mt-5 space-y-3">
