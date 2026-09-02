@@ -157,5 +157,3 @@ const Field = ({ icon, trailing, ...props }) => (
 );
 
 export default LoginPage;
-
-.
